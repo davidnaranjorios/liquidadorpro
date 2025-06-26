@@ -6,7 +6,6 @@ channel = "stable-24_05"
 run = ["sh", "-c", "run"]
 
 [workflows]
-runButton = "Run Flask App"
 
 [[workflows.workflow]]
 name = "Run Flask App"
@@ -15,4 +14,4 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python app.py"
+args = "python3 app.py"

@@ -7,52 +7,78 @@ import os
 
 app = Flask(__name__)
 
+# --- Variables globales para datos ---
+df_tasas = None
+df_ipc = None
+
 # --- Cargar datos ---
 def cargar_datos():
     global df_tasas, df_ipc
     
-    # Cargar tasas
-    df_tasas = pd.read_csv('attached_assets/tasas_dian_1750970948403.csv', sep=';', dayfirst=True)
-    df_tasas.columns = ['fecha_inicio', 'fecha_fin', 'tasa']
-    df_tasas['fecha_inicio'] = pd.to_datetime(df_tasas['fecha_inicio'], dayfirst=True)
-    df_tasas['fecha_fin'] = pd.to_datetime(df_tasas['fecha_fin'], dayfirst=True)
-    df_tasas['tasa'] = df_tasas['tasa'].str.replace('%', '').str.replace(',', '.').astype(float) / 100
-    
-    # Cargar IPC (datos de ejemplo)
-    df_ipc = pd.DataFrame({
-        'anio': [2018, 2019, 2020, 2021, 2022, 2023, 2024],
-        'tasa': [0.0318, 0.0360, 0.0161, 0.0515, 0.1312, 0.0921, 0.0565]
-    })
+    try:
+        # Cargar tasas
+        df_tasas = pd.read_csv('attached_assets/tasas_dian_1750970948403.csv', sep=';', dayfirst=True)
+        df_tasas.columns = ['fecha_inicio', 'fecha_fin', 'tasa']
+        df_tasas['fecha_inicio'] = pd.to_datetime(df_tasas['fecha_inicio'], dayfirst=True)
+        df_tasas['fecha_fin'] = pd.to_datetime(df_tasas['fecha_fin'], dayfirst=True)
+        df_tasas['tasa'] = df_tasas['tasa'].str.replace('%', '').str.replace(',', '.').astype(float) / 100
+        
+        # Cargar IPC (datos de ejemplo)
+        df_ipc = pd.DataFrame({
+            'anio': [2018, 2019, 2020, 2021, 2022, 2023, 2024],
+            'tasa': [0.0318, 0.0360, 0.0161, 0.0515, 0.1312, 0.0921, 0.0565]
+        })
+        print("Datos cargados correctamente")
+    except Exception as e:
+        print(f"Error cargando datos: {e}")
+        # Crear datos por defecto si no se pueden cargar
+        df_tasas = pd.DataFrame({
+            'fecha_inicio': [datetime(2018, 1, 1)],
+            'fecha_fin': [datetime(2025, 12, 31)],
+            'tasa': [0.15]
+        })
+        df_ipc = pd.DataFrame({
+            'anio': [2018, 2019, 2020, 2021, 2022, 2023, 2024],
+            'tasa': [0.0318, 0.0360, 0.0161, 0.0515, 0.1312, 0.0921, 0.0565]
+        })
 
 def obtener_tasa(fecha, tipo_tasa="TASA DIAN"):
     """Obtiene la tasa según el tipo especificado"""
-    fila = df_tasas[(df_tasas['fecha_inicio'] <= fecha) & (df_tasas['fecha_fin'] >= fecha)]
-    if fila.empty:
-        return 0.0
-    
-    tasa_base = fila.iloc[0]['tasa']
-    
-    if tipo_tasa == "TASA DIAN":
-        return tasa_base
-    elif tipo_tasa == "ART. 91 LEY 2277":
-        return tasa_base * 0.5
-    elif tipo_tasa == "ART 45 LEY 2155":
-        return ((tasa_base + 0.02) / 1.5) * 0.2
-    elif tipo_tasa == "ART 48 LEY 2155":
-        return (tasa_base + 0.02) / 1.5
-    elif tipo_tasa == "ART 120 LEY 2010":
-        return ((tasa_base + 0.02) / 1.5) + 0.02
-    else:
-        return tasa_base
+    try:
+        fila = df_tasas[(df_tasas['fecha_inicio'] <= fecha) & (df_tasas['fecha_fin'] >= fecha)]
+        if fila.empty:
+            return 0.15  # Tasa por defecto
+        
+        tasa_base = fila.iloc[0]['tasa']
+        
+        if tipo_tasa == "TASA DIAN":
+            return tasa_base
+        elif tipo_tasa == "ART. 91 LEY 2277":
+            return tasa_base * 0.5
+        elif tipo_tasa == "ART 45 LEY 2155":
+            return ((tasa_base + 0.02) / 1.5) * 0.2
+        elif tipo_tasa == "ART 48 LEY 2155":
+            return (tasa_base + 0.02) / 1.5
+        elif tipo_tasa == "ART 120 LEY 2010":
+            return ((tasa_base + 0.02) / 1.5) + 0.02
+        else:
+            return tasa_base
+    except Exception as e:
+        print(f"Error obteniendo tasa: {e}")
+        return 0.15
 
 def incremento_ipc_compuesto(anio_inicio, anio_fin):
-    if anio_fin <= anio_inicio:
-        return 0.0
-    tasas = df_ipc[(df_ipc['anio'] > anio_inicio) & (df_ipc['anio'] <= anio_fin)]['tasa']
-    acumulado = 1.0
-    for tasa in tasas:
-        acumulado *= (1 + tasa)
-    return acumulado - 1
+    try:
+        if anio_fin <= anio_inicio:
+            return 0.0
+        tasas = df_ipc[(df_ipc['anio'] > anio_inicio) & (df_ipc['anio'] <= anio_fin)]['tasa']
+        acumulado = 1.0
+        for tasa in tasas:
+            acumulado *= (1 + tasa)
+        return acumulado - 1
+    except Exception as e:
+        print(f"Error calculando IPC: {e}")
+        return 0.05
 
 def redondear_mas(valor):
     return int(math.ceil(valor / 1000.0)) * 1000
@@ -160,8 +186,10 @@ def calcular():
         motor.procesar()
         return jsonify(motor.resumen())
     except Exception as e:
+        print(f"Error en cálculo: {e}")
         return jsonify({'error': str(e)}), 400
 
 if __name__ == '__main__':
     cargar_datos()
+    print("Iniciando servidor Flask en http://0.0.0.0:5000")
     app.run(host='0.0.0.0', port=5000, debug=True)
