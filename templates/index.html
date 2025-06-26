@@ -559,7 +559,7 @@
             const ctx = document.getElementById('chartSaldos').getContext('2d');
             
             // Destruir gráfica anterior si existe
-            if (window.chartSaldos) {
+            if (window.chartSaldos && typeof window.chartSaldos.destroy === 'function') {
                 window.chartSaldos.destroy();
             }
             
