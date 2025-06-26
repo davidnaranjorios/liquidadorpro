@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Motor de Liquidación</title>
+  <script>
+    async function enviarFormulario(event) {
+      event.preventDefault();
+      const form = document.getElementById('formulario');
+      const data = Object.fromEntries(new FormData(form).entries());
+      data.anio = parseInt(data.anio);
+      data.periodo = parseInt(data.periodo);
+      data.valor_inicial = parseInt(data.valor_inicial);
+      data.valor_sancion = parseInt(data.valor_sancion);
+      data.pagos = JSON.parse(data.pagos);
+
+      const res = await fetch('/calcular', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+      });
+      const resultado = await res.json();
+
+      const tabla = document.getElementById('resultado');
+      tabla.innerHTML = '<tr><th>Fecha</th><th>Tipo</th><th>Impuesto</th><th>Intereses</th><th>Sanción</th><th>Saldo Impuesto</th><th>Saldo Intereses</th><th>Saldo Sanción</th></tr>';
+      resultado.forEach(row => {
+        tabla.innerHTML += `<tr>
+          <td>${row.fecha_pago}</td>
+          <td>${row.tipo_proporcion}</td>
+          <td>${row.impuesto_proporcion}</td>
+          <td>${row.intereses_proporcion}</td>
+          <td>${row.sancion_proporcion}</td>
+          <td>${row.impuesto_saldo}</td>
+          <td>${row.intereses_saldo}</td>
+          <td>${row.sancion_saldo}</td>
+        </tr>`;
+      });
+    }
+  </script>
+</head>
+<body>
+  <h1>Motor de Liquidación</h1>
+  <form id="formulario" onsubmit="enviarFormulario(event)">
+    <label>NIT: <input name="nit" required></label><br>
+    <label>Razón Social: <input name="razon_social" required></label><br>
+    <label>Concepto: <input name="concepto" required></label><br>
+    <label>Año: <input name="anio" type="number" required></label><br>
+    <label>Periodo: <input name="periodo" type="number" required></label><br>
+    <label>Valor Inicial: <input name="valor_inicial" type="number" required></label><br>
+    <label>Valor Sanción: <input name="valor_sancion" type="number" required></label><br>
+    <label>Origen Sanción:
+      <select name="origen_sancion">
+        <option value="Privada">Privada</option>
+        <option value="Oficial">Oficial</option>
+      </select>
+    </label><br>
+    <label>Fecha Vencimiento: <input name="fecha_vencimiento" placeholder="dd/mm/yyyy" required></label><br>
+    <label>Fecha Presentación Sanción: <input name="fecha_presentacion_sancion" placeholder="dd/mm/yyyy" required></label><br>
+    <label>Tipo Norma: <input name="tipo_norma" required></label><br>
+    <label>Pagos (JSON):<br>
+      <textarea name="pagos" rows="5" cols="60" required>
+[
+  {"fecha": "21/04/2022", "valor": 2768000},
+  {"fecha": "25/05/2022", "valor": 2000000},
+  {"fecha": "10/08/2022", "valor": 1606000},
+  {"fecha": "26/09/2024", "valor": 1922000}
+]</textarea>
+    </label><br>
+    <button type="submit">Calcular</button>
+  </form>
+
+  <h2>Resultado</h2>
+  <table border="1" id="resultado"></table>
+</body>
+</html>
