@@ -81,7 +81,7 @@ def incremento_ipc_compuesto(anio_inicio, anio_fin):
         return 0.05
 
 def redondear_mas(valor):
-    return int(math.ceil(valor / 1000.0)) * 1000
+    return round(valor / 1000.0) * 1000
 
 class MotorLiquidacion:
     def __init__(self, data):
@@ -159,10 +159,8 @@ class MotorLiquidacion:
 
             self.historial.append({
                 'fecha_pago': fecha_pago.strftime('%d/%m/%Y'),
-                'tipo_tasa': tipo_tasa,
+                'tasa_aplicada': f"{tasa*100:.2f}%",
                 'monto_pago': f"${monto_pago:,.0f}",
-                'tipo_proporcion': tipo_proporcion,
-                'factor_proporcionalidad': factor,
                 'impuesto_proporcion': f"${impuesto_pago:,.0f}",
                 'intereses_proporcion': f"${intereses_pago:,.0f}",
                 'sancion_proporcion': f"${sancion_pago:,.0f}",

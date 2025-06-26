@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Motor de Liquidación DIAN</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             margin: 0;
@@ -387,15 +388,19 @@
 
             <div id="resultado-section" class="resultado-section hidden">
                 <h2 style="color: #2c3e50; margin-bottom: 20px; text-align: center;">📊 Resultado de la Liquidación</h2>
+                
+                <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                    <h3 style="color: #2c3e50; margin-bottom: 15px; text-align: center;">Evolución de Saldos en el Tiempo</h3>
+                    <canvas id="chartSaldos" width="400" height="200"></canvas>
+                </div>
+                
                 <div style="overflow-x: auto;">
                     <table class="resultado-table" id="resultado-table">
                         <thead>
                             <tr>
                                 <th>Fecha</th>
-                                <th>Tipo Tasa</th>
+                                <th>Tasa Aplicada</th>
                                 <th>Monto Pago</th>
-                                <th>Tipo Proporción</th>
-                                <th>Factor</th>
                                 <th>Impuesto</th>
                                 <th>Intereses</th>
                                 <th>Sanción</th>
@@ -515,14 +520,18 @@
             const tbody = document.getElementById('resultado-tbody');
             tbody.innerHTML = '';
             
+            // Preparar datos para la gráfica
+            const fechas = [];
+            const saldosImpuesto = [];
+            const saldosIntereses = [];
+            const saldosSancion = [];
+            
             resultado.forEach(row => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${row.fecha_pago}</td>
-                    <td>${row.tipo_tasa}</td>
+                    <td>${row.tasa_aplicada}</td>
                     <td>${row.monto_pago}</td>
-                    <td>${row.tipo_proporcion}</td>
-                    <td>${(row.factor_proporcionalidad * 100).toFixed(2)}%</td>
                     <td>${row.impuesto_proporcion}</td>
                     <td>${row.intereses_proporcion}</td>
                     <td>${row.sancion_proporcion}</td>
@@ -531,10 +540,91 @@
                     <td>${row.sancion_saldo}</td>
                 `;
                 tbody.appendChild(tr);
+                
+                // Extraer datos para la gráfica
+                fechas.push(row.fecha_pago);
+                saldosImpuesto.push(parseFloat(row.impuesto_saldo.replace(/[$,]/g, '')));
+                saldosIntereses.push(parseFloat(row.intereses_saldo.replace(/[$,]/g, '')));
+                saldosSancion.push(parseFloat(row.sancion_saldo.replace(/[$,]/g, '')));
             });
+            
+            // Crear la gráfica
+            crearGrafica(fechas, saldosImpuesto, saldosIntereses, saldosSancion);
             
             document.getElementById('resultado-section').classList.remove('hidden');
             document.getElementById('resultado-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function crearGrafica(fechas, saldosImpuesto, saldosIntereses, saldosSancion) {
+            const ctx = document.getElementById('chartSaldos').getContext('2d');
+            
+            // Destruir gráfica anterior si existe
+            if (window.chartSaldos) {
+                window.chartSaldos.destroy();
+            }
+            
+            window.chartSaldos = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: fechas,
+                    datasets: [
+                        {
+                            label: 'Saldo Impuesto',
+                            data: saldosImpuesto,
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Saldo Intereses',
+                            data: saldosIntereses,
+                            borderColor: '#f39c12',
+                            backgroundColor: 'rgba(243, 156, 18, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Saldo Sanción',
+                            data: saldosSancion,
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Evolución de Saldos por Fecha de Pago'
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
         }
 
         function mostrarError(mensaje) {
