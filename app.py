@@ -96,7 +96,6 @@ class MotorLiquidacion:
         self.origen_sancion = data['origen_sancion']
         self.fecha_vencimiento = datetime.strptime(data['fecha_vencimiento'], '%Y-%m-%d')
         self.fecha_presentacion_sancion = datetime.strptime(data['fecha_presentacion_sancion'], '%Y-%m-%d')
-        self.tipo_norma = data['tipo_norma']
         self.pagos = data['pagos']
 
         self.saldo_intereses = 0.0
@@ -154,8 +153,8 @@ class MotorLiquidacion:
 
             # Actualizar saldos
             self.saldo_impuesto = max(0, self.saldo_impuesto - impuesto_pago)
-            self.saldo_intereses = max(0, self.saldo_intereses - intereses_pago)
-            self.saldo_sancion = max(0, self.saldo_sancion - sancion_pago)
+            self.saldo_intereses = redondear_mas(max(0, self.saldo_intereses - intereses_pago))
+            self.saldo_sancion = redondear_mas(max(0, self.saldo_sancion - sancion_pago))
 
             self.historial.append({
                 'fecha_pago': fecha_pago.strftime('%d/%m/%Y'),

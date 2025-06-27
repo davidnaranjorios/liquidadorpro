@@ -291,7 +291,19 @@
                     </div>
                     <div class="form-group">
                         <label for="concepto">Concepto:</label>
-                        <input type="text" id="concepto" name="concepto" required placeholder="Descripción del concepto">
+                        <select id="concepto" name="concepto" required>
+                            <option value="">Seleccione un concepto</option>
+                            <option value="Renta">Renta</option>
+                            <option value="Renta CREE">Renta CREE</option>
+                            <option value="Ventas">Ventas</option>
+                            <option value="Consumo">Consumo</option>
+                            <option value="Retención">Retención</option>
+                            <option value="Retención CREE">Retención CREE</option>
+                            <option value="Patrimonio">Patrimonio</option>
+                            <option value="Riqueza">Riqueza</option>
+                            <option value="GMF">GMF</option>
+                            <option value="Otros">Otros</option>
+                        </select>
                     </div>
                 </div>
 
@@ -321,10 +333,6 @@
                             <option value="Privada">Privada</option>
                             <option value="Oficial">Oficial</option>
                         </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="tipo_norma">Tipo Norma:</label>
-                        <input type="text" id="tipo_norma" name="tipo_norma" required placeholder="Ej: Decreto 123">
                     </div>
                 </div>
 
